@@ -1,0 +1,707 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QR Code Generator & Reader</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            color: white;
+            margin-bottom: 40px;
+            animation: fadeIn 0.6s ease-in;
+        }
+
+        header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        header p {
+            font-size: 1.1em;
+            opacity: 0.95;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .tab-button {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1em;
+            cursor: pointer;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+
+        .tab-button.active {
+            background: white;
+            color: #667eea;
+            transform: scale(1.05);
+        }
+
+        .tab-button:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .tab-content {
+            display: none;
+            animation: slideIn 0.4s ease-in;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 600;
+            font-size: 0.95em;
+        }
+
+        input[type="text"],
+        input[type="number"],
+        select,
+        input[type="file"] {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 0.95em;
+            transition: border-color 0.3s ease;
+            font-family: inherit;
+        }
+
+        input[type="text"]:focus,
+        input[type="number"]:focus,
+        select:focus,
+        input[type="file"]:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 12px 30px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .button-secondary {
+            background: #f0f0f0;
+            color: #333;
+        }
+
+        .button-secondary:hover {
+            background: #e0e0e0;
+        }
+
+        .preview {
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        .preview img {
+            max-width: 300px;
+            max-height: 300px;
+            border-radius: 8px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .result {
+            background: #f5f5f5;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+            word-break: break-all;
+        }
+
+        .success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .file-input-wrapper {
+            position: relative;
+            overflow: hidden;
+            display: inline-block;
+            width: 100%;
+        }
+
+        .file-input-label {
+            display: block;
+            padding: 12px;
+            background: #f5f5f5;
+            border: 2px dashed #667eea;
+            border-radius: 8px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .file-input-label:hover {
+            background: #f0f0ff;
+        }
+
+        .file-input-wrapper input[type="file"] {
+            position: absolute;
+            left: -9999px;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+
+            header h1 {
+                font-size: 1.8em;
+            }
+
+            .tabs {
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .tab-button {
+                width: 100%;
+            }
+        }
+
+        .info-box {
+            background: #e3f2fd;
+            border-left: 4px solid #2196f3;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            color: #1565c0;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .stat-card {
+            background: #f5f5f5;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 1.8em;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .stat-label {
+            color: #666;
+            font-size: 0.9em;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🔲 QR Code Generator & Reader</h1>
+            <p>Fast, Efficient, and Easy to Use</p>
+        </header>
+
+        <div class="tabs">
+            <button class="tab-button active" onclick="switchTab('generate-single')">Generate Single</button>
+            <button class="tab-button" onclick="switchTab('generate-batch')">Generate Batch</button>
+            <button class="tab-button" onclick="switchTab('read-single')">Read Single</button>
+            <button class="tab-button" onclick="switchTab('read-batch')">Read Batch</button>
+        </div>
+
+        <!-- Generate Single -->
+        <div id="generate-single" class="tab-content active">
+            <div class="card">
+                <h2>Generate Single QR Code</h2>
+                <div class="info-box">
+                    ℹ️ Enter a URL to generate a QR code instantly
+                </div>
+
+                <form id="generateSingleForm">
+                    <div class="grid">
+                        <div>
+                            <div class="form-group">
+                                <label>URL</label>
+                                <input type="text" id="singleUrl" placeholder="https://example.com" required>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="form-group">
+                                <label>Size (pixels)</label>
+                                <input type="number" id="singleSize" value="500" min="100" max="2000" required>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Format</label>
+                        <select id="singleFormat">
+                            <option value="png">PNG</option>
+                            <option value="jpg">JPG</option>
+                        </select>
+                    </div>
+
+                    <button type="submit">Generate QR Code</button>
+                </form>
+
+                <div id="singlePreview"></div>
+            </div>
+        </div>
+
+        <!-- Generate Batch -->
+        <div id="generate-batch" class="tab-content">
+            <div class="card">
+                <h2>Generate Batch QR Codes</h2>
+                <div class="info-box">
+                    ℹ️ Upload a CSV file with columns: filename, url (max 5000 QR codes)
+                </div>
+
+                <form id="generateBatchForm">
+                    <div class="form-group">
+                        <label>CSV File (filename, url)</label>
+                        <div class="file-input-wrapper">
+                            <label class="file-input-label">
+                                📁 Click to upload CSV file or drag and drop
+                                <input type="file" id="batchCsvFile" accept=".csv" required>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="grid">
+                        <div>
+                            <div class="form-group">
+                                <label>Size (pixels)</label>
+                                <input type="number" id="batchSize" value="500" min="100" max="2000" required>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="form-group">
+                                <label>Format</label>
+                                <select id="batchFormat">
+                                    <option value="png">PNG</option>
+                                    <option value="jpg">JPG</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="button-group">
+                        <button type="submit">Generate QR Codes</button>
+                        <a href="/api/download-example-csv" class="tab-button button-secondary" style="text-decoration: none; display: inline-block; padding: 12px 30px;">Download Example CSV</a>
+                    </div>
+                </form>
+
+                <div id="batchResult"></div>
+            </div>
+        </div>
+
+        <!-- Read Single -->
+        <div id="read-single" class="tab-content">
+            <div class="card">
+                <h2>Read Single QR Code</h2>
+                <div class="info-box">
+                    ℹ️ Upload an image containing a QR code to decode it
+                </div>
+
+                <form id="readSingleForm">
+                    <div class="form-group">
+                        <label>Image File (PNG, JPG, BMP, GIF, TIFF)</label>
+                        <div class="file-input-wrapper">
+                            <label class="file-input-label">
+                                📁 Click to upload image or drag and drop
+                                <input type="file" id="singleImage" accept="image/*" required>
+                            </label>
+                        </div>
+                    </div>
+
+                    <button type="submit">Read QR Code</button>
+                </form>
+
+                <div id="singleReadResult"></div>
+            </div>
+        </div>
+
+        <!-- Read Batch -->
+        <div id="read-batch" class="tab-content">
+            <div class="card">
+                <h2>Read Batch QR Codes</h2>
+                <div class="info-box">
+                    ℹ️ Upload a ZIP file containing multiple QR code images to decode all at once
+                </div>
+
+                <form id="readBatchForm">
+                    <div class="form-group">
+                        <label>ZIP File (containing images with QR codes)</label>
+                        <div class="file-input-wrapper">
+                            <label class="file-input-label">
+                                📁 Click to upload ZIP file or drag and drop
+                                <input type="file" id="batchZipFile" accept=".zip" required>
+                            </label>
+                        </div>
+                    </div>
+
+                    <button type="submit">Read All QR Codes</button>
+                </form>
+
+                <div id="batchReadResult"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function switchTab(tabName) {
+            // Hide all tabs
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+
+            // Remove active class from buttons
+            document.querySelectorAll('.tab-button').forEach(btn => {
+                btn.classList.remove('active');
+            });
+
+            // Show selected tab
+            document.getElementById(tabName).classList.add('active');
+
+            // Add active class to clicked button
+            event.target.classList.add('active');
+        }
+
+        // Generate Single QR Code
+        document.getElementById('generateSingleForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const url = document.getElementById('singleUrl').value;
+            const size = document.getElementById('singleSize').value;
+            const format = document.getElementById('singleFormat').value;
+
+            const btn = e.target.querySelector('button');
+            const originalText = btn.textContent;
+            btn.disabled = true;
+            btn.innerHTML = '<span class="loading"></span> Generating...';
+
+            try {
+                const response = await fetch('/api/generate-qr', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ url, size, format })
+                });
+
+                if (response.ok) {
+                    const blob = await response.blob();
+                    const reader = new FileReader();
+                    reader.onload = (event) => {
+                        document.getElementById('singlePreview').innerHTML = `
+                            <div class="preview">
+                                <p>✅ QR Code Generated Successfully!</p>
+                                <img src="${event.target.result}" alt="QR Code">
+                                <a href="${event.target.result}" download="qrcode.${format}" class="tab-button" style="display: inline-block; margin-top: 15px;">📥 Download</a>
+                            </div>
+                        `;
+                    };
+                    reader.readAsDataURL(blob);
+                } else {
+                    const error = await response.json();
+                    document.getElementById('singlePreview').innerHTML = `<div class="error">❌ ${error.error}</div>`;
+                }
+            } catch (error) {
+                document.getElementById('singlePreview').innerHTML = `<div class="error">❌ Error: ${error.message}</div>`;
+            } finally {
+                btn.disabled = false;
+                btn.textContent = originalText;
+            }
+        });
+
+        // Generate Batch QR Codes
+        document.getElementById('generateBatchForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const file = document.getElementById('batchCsvFile').files[0];
+            const size = document.getElementById('batchSize').value;
+            const format = document.getElementById('batchFormat').value;
+
+            const btn = e.target.querySelector('button');
+            const originalText = btn.textContent;
+            btn.disabled = true;
+            btn.innerHTML = '<span class="loading"></span> Generating...';
+
+            try {
+                const formData = new FormData();
+                formData.append('file', file);
+                formData.append('size', size);
+                formData.append('format', format);
+
+                const response = await fetch('/api/generate-batch', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (response.ok) {
+                    const blob = await response.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `qr_codes_${Date.now()}.zip`;
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+
+                    document.getElementById('batchResult').innerHTML = `<div class="success">✅ QR codes generated successfully! Download started.</div>`;
+                } else {
+                    const error = await response.json();
+                    document.getElementById('batchResult').innerHTML = `<div class="error">❌ ${error.error}</div>`;
+                }
+            } catch (error) {
+                document.getElementById('batchResult').innerHTML = `<div class="error">❌ Error: ${error.message}</div>`;
+            } finally {
+                btn.disabled = false;
+                btn.textContent = originalText;
+            }
+        });
+
+        // Read Single QR Code
+        document.getElementById('readSingleForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const file = document.getElementById('singleImage').files[0];
+
+            const btn = e.target.querySelector('button');
+            const originalText = btn.textContent;
+            btn.disabled = true;
+            btn.innerHTML = '<span class="loading"></span> Reading...';
+
+            try {
+                const formData = new FormData();
+                formData.append('file', file);
+
+                const response = await fetch('/api/read-qr', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    document.getElementById('singleReadResult').innerHTML = `
+                        <div class="success">✅ QR Code Read Successfully!</div>
+                        <div class="result">
+                            <strong>Decoded Content:</strong><br>
+                            ${data.data}
+                        </div>
+                    `;
+                } else {
+                    const error = await response.json();
+                    document.getElementById('singleReadResult').innerHTML = `<div class="error">❌ ${error.error}</div>`;
+                }
+            } catch (error) {
+                document.getElementById('singleReadResult').innerHTML = `<div class="error">❌ Error: ${error.message}</div>`;
+            } finally {
+                btn.disabled = false;
+                btn.textContent = originalText;
+            }
+        });
+
+        // Read Batch QR Codes
+        document.getElementById('readBatchForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const file = document.getElementById('batchZipFile').files[0];
+
+            const btn = e.target.querySelector('button');
+            const originalText = btn.textContent;
+            btn.disabled = true;
+            btn.innerHTML = '<span class="loading"></span> Reading...';
+
+            try {
+                const formData = new FormData();
+                formData.append('file', file);
+
+                const response = await fetch('/api/read-batch', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (response.ok) {
+                    const blob = await response.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `qr_results_${Date.now()}.csv`;
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+
+                    document.getElementById('batchReadResult').innerHTML = `<div class="success">✅ QR codes read successfully! CSV file downloaded.</div>`;
+                } else {
+                    const error = await response.json();
+                    document.getElementById('batchReadResult').innerHTML = `<div class="error">❌ ${error.error}</div>`;
+                }
+            } catch (error) {
+                document.getElementById('batchReadResult').innerHTML = `<div class="error">❌ Error: ${error.message}</div>`;
+            } finally {
+                btn.disabled = false;
+                btn.textContent = originalText;
+            }
+        });
+
+        // Drag and drop functionality
+        function setupDragDrop(inputId) {
+            const input = document.getElementById(inputId);
+            const label = input.parentElement;
+
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                label.addEventListener(eventName, preventDefaults, false);
+            });
+
+            function preventDefaults(e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+
+            ['dragenter', 'dragover'].forEach(eventName => {
+                label.addEventListener(eventName, () => {
+                    label.style.background = '#f0f0ff';
+                }, false);
+            });
+
+            ['dragleave', 'drop'].forEach(eventName => {
+                label.addEventListener(eventName, () => {
+                    label.style.background = '#f5f5f5';
+                }, false);
+            });
+
+            label.addEventListener('drop', (e) => {
+                const dt = e.dataTransfer;
+                const files = dt.files;
+                input.files = files;
+            }, false);
+        }
+
+        setupDragDrop('batchCsvFile');
+        setupDragDrop('singleImage');
+        setupDragDrop('batchZipFile');
+    </script>
+</body>
+</html>

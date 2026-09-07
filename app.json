@@ -1,0 +1,20 @@
+{
+  "name": "QR Code Generator & Reader",
+  "description": "Fast QR Code generator and reader application",
+  "repository": "https://github.com/rsharmaeremedium/qr-code-generator-reader",
+  "keywords": ["qr-code", "generator", "reader", "flask"],
+  "buildpacks": [
+    {
+      "url": "heroku/python"
+    },
+    {
+      "url": "https://github.com/jonathanong/heroku-buildpack-ffmpeg-latest.git"
+    }
+  ],
+  "env": {
+    "FLASK_ENV": {
+      "description": "Flask environment",
+      "value": "production"
+    }
+  }
+}
