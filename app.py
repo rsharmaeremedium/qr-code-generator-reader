@@ -163,7 +163,8 @@ def generate_batch():
                     
                     # Save to ZIP
                     img_io = io.BytesIO()
-                    if format_type == 'jpg':\n                        if img.mode in ('RGBA', 'LA', 'P'):
+                    if format_type == 'jpg':
+                        if img.mode in ('RGBA', 'LA', 'P'):
                             rgb_img = Image.new('RGB', img.size, (255, 255, 255))
                             rgb_img.paste(img, mask=img.split()[-1] if img.mode == 'RGBA' else None)
                             rgb_img.save(img_io, format='JPEG', quality=95, optimize=True)
@@ -263,8 +264,11 @@ def read_batch():
                         qr_data = decoded_objects[0].data.decode('utf-8')
                         results.append({'filename': img_file, 'qr_content': qr_data, 'status': 'Success'})
                     else:
-                        results.append({'filename': img_file, 'qr_content': '', 'status': 'No QR code found'})\n                \n                except Exception as e:
-                    results.append({'filename': img_file, 'qr_content': '', 'status': f'Error: {str(e)}'})\n        
+                        results.append({'filename': img_file, 'qr_content': '', 'status': 'No QR code found'})
+                
+                except Exception as e:
+                    results.append({'filename': img_file, 'qr_content': '', 'status': f'Error: {str(e)}'})
+        
         # Create CSV response
         csv_buffer = io.StringIO()
         writer = csv.DictWriter(csv_buffer, fieldnames=['filename', 'qr_content', 'status'])
