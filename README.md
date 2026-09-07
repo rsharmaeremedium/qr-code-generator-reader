@@ -2,6 +2,21 @@
 
 An optimized, high-performance Python solution for generating and reading QR codes at scale. Perfect for batch processing up to 5000+ QR codes efficiently.
 
+## 🚀 Quick Deploy
+
+### Deploy to Heroku (Easiest!)
+
+[![Deploy to Heroku](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy?template=https://github.com/rsharmaeremedium/qr-code-generator-reader)
+
+### Deploy to Railway
+[![Deploy on Railway](https://railway.app/button.svg)](https://railway.app/template/Z_p1Mj?referralCode=railway)
+
+### Deploy to Render
+1. Go to [render.com](https://render.com)
+2. Click "New +" → "Web Service"
+3. Connect this GitHub repo
+4. Deploy
+
 ## Features
 
 ### 🎯 QR Code Generator
@@ -23,13 +38,21 @@ An optimized, high-performance Python solution for generating and reading QR cod
 - **Parallel Processing**: Fast concurrent reading
 - **Error Logging**: Track successful and failed reads
 
-## Installation
+### 🌐 Web Interface
+- Beautiful, responsive UI
+- Generate single QR codes
+- Batch generate from CSV
+- Read single QR codes
+- Batch read from ZIP files
+- Download results instantly
+
+## Installation & Setup
 
 ### Requirements
 - Python 3.8+
 - pip
 
-### Setup
+### Local Installation
 
 ```bash
 # Clone the repository
@@ -40,9 +63,34 @@ cd qr-code-generator-reader
 pip install -r requirements.txt
 ```
 
+### Run Web Application Locally
+
+```bash
+# Install web dependencies
+pip install -r requirements_web.txt
+
+# Run the Flask app
+python app.py
+
+# Open browser and visit
+# http://localhost:5000
+```
+
+### Run with Docker
+
+```bash
+# Build image
+docker build -t qr-code-app .
+
+# Run container
+docker run -p 5000:5000 qr-code-app
+
+# Visit http://localhost:5000
+```
+
 ## Usage
 
-### 1. Generate QR Codes from CSV
+### 1. Generate QR Codes from CSV (CLI)
 
 #### Prepare CSV File
 Create a CSV file with two columns: `filename` and `url`
@@ -83,7 +131,7 @@ Generated QR codes will be saved as:
 - `qr_codes/Stack Overflow.png`
 - etc.
 
-### 2. Read QR Codes from Folder
+### 2. Read QR Codes from Folder (CLI)
 
 #### Read QR codes
 
@@ -111,6 +159,18 @@ Google.png,https://www.google.com,Success
 GitHub.png,https://www.github.com,Success
 Stack Overflow.png,https://stackoverflow.com,Success
 ```
+
+### 3. Use Web Interface
+
+#### Access the Web App
+- **Online (Deployed)**: Get URL after deployment
+- **Local**: `http://localhost:5000`
+
+#### Features
+- **Generate Single**: Enter URL → Download QR code
+- **Generate Batch**: Upload CSV → Download ZIP with all QR codes
+- **Read Single**: Upload image → Get decoded URL
+- **Read Batch**: Upload ZIP → Download CSV with results
 
 ## Python API Usage
 
@@ -152,6 +212,58 @@ qr_content = reader.read_single('./qr_codes/Google.png')
 print(f"Decoded: {qr_content}")
 ```
 
+## API Endpoints (Web)
+
+### Generate Single QR
+```
+POST /api/generate-qr
+Content-Type: application/json
+
+{
+  "url": "https://example.com",
+  "size": 500,
+  "format": "png"
+}
+
+Response: PNG/JPG image file
+```
+
+### Generate Batch QR
+```
+POST /api/generate-batch
+Content-Type: multipart/form-data
+
+file: CSV file
+size: 500 (optional)
+format: png (optional)
+
+Response: ZIP file with QR codes
+```
+
+### Read Single QR
+```
+POST /api/read-qr
+Content-Type: multipart/form-data
+
+file: Image file
+
+Response:
+{
+  "success": true,
+  "data": "https://example.com"
+}
+```
+
+### Read Batch QR
+```
+POST /api/read-batch
+Content-Type: multipart/form-data
+
+file: ZIP file with images
+
+Response: CSV file with results
+```
+
 ## Performance
 
 ### Benchmark Results (Typical)
@@ -190,11 +302,47 @@ print(f"Decoded: {qr_content}")
 
 ```
 .
-├── qr_generator.py          # QR code generation module
-├── qr_reader.py             # QR code reading module
-├── requirements.txt         # Python dependencies
-├── example_input.csv        # Example input CSV
-└── README.md               # This file
+├── app.py                      # Flask web application
+├── qr_generator.py             # QR code generation module
+├── qr_reader.py                # QR code reading module
+├── requirements.txt            # CLI dependencies
+├── requirements_web.txt        # Web dependencies
+├── templates/
+│   └── index.html              # Web UI
+├── Dockerfile                  # Docker configuration
+├── Procfile                    # Heroku configuration
+├── app.json                    # Heroku app.json
+├── example_input.csv           # Example input CSV
+├── example_usage.py            # Example usage script
+└── README.md                   # This file
+```
+
+## Deployment Options
+
+### Heroku (Recommended)
+1. Click the "Deploy to Heroku" button above
+2. Or use CLI:
+   ```bash
+   heroku login
+   heroku create your-app-name
+   git push heroku main
+   heroku open
+   ```
+
+### Railway
+1. Click the "Deploy on Railway" button above
+2. Or visit [railway.app](https://railway.app)
+
+### Render
+1. Visit [render.com](https://render.com)
+2. Click "New +" → "Web Service"
+3. Connect GitHub repo
+4. Deploy
+
+### Docker
+```bash
+docker build -t qr-code-app .
+docker run -p 5000:5000 qr-code-app
 ```
 
 ## Error Handling
@@ -219,6 +367,8 @@ Check the logs for detailed error information:
 **Solution:** Ensure all dependencies are installed
 ```bash
 pip install -r requirements.txt
+# For web app
+pip install -r requirements_web.txt
 ```
 
 ### Issue: Slow Performance
@@ -235,8 +385,15 @@ pip install -r requirements.txt
 - Check image brightness/contrast
 - Try increasing DPI or resolution of images
 
+### Issue: Port already in use (local)
+**Solution:**
+```bash
+python app.py --port 5001
+```
+
 ## Dependencies
 
+### CLI
 - **qrcode[pil]**: QR code generation
 - **pillow**: Image processing
 - **opencv-python**: Image reading and processing
@@ -244,6 +401,12 @@ pip install -r requirements.txt
 - **pandas**: Data handling
 - **numpy**: Numerical operations
 - **tqdm**: Progress bars
+
+### Web
+- **flask**: Web framework
+- **flask-cors**: CORS support
+- **gunicorn**: Production WSGI server
+- All CLI dependencies
 
 ## License
 
@@ -258,6 +421,14 @@ Contributions are welcome! Feel free to submit issues and pull requests.
 For issues, questions, or suggestions, please open an issue on GitHub.
 
 ## Changelog
+
+### v2.0.0 (Web Edition)
+- ✅ Flask web application
+- ✅ Beautiful responsive UI
+- ✅ Deploy to Heroku, Railway, Render
+- ✅ Docker support
+- ✅ REST API endpoints
+- ✅ Batch file upload/download
 
 ### v1.0.0 (Initial Release)
 - ✅ Optimized QR code generator with batch processing
