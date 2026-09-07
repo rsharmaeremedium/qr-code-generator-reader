@@ -320,12 +320,98 @@
             font-size: 0.9em;
             margin-top: 5px;
         }
+
+        /* Progress bar styles */
+        .progress-wrapper {
+            display: none;
+            margin: 20px 0;
+        }
+
+        .progress-wrapper.active {
+            display: block;
+        }
+
+        .progress-bar-outer {
+            background: #e0e0e0;
+            border-radius: 12px;
+            overflow: hidden;
+            height: 28px;
+            position: relative;
+        }
+
+        .progress-bar-inner {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            height: 100%;
+            border-radius: 12px;
+            transition: width 0.3s ease;
+            width: 0%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 0;
+        }
+
+        .progress-bar-inner.indeterminate {
+            width: 100% !important;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background-size: 200% 100%;
+            animation: shimmer 1.5s ease-in-out infinite;
+        }
+
+        .progress-bar-inner.indeterminate::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(
+                90deg,
+                transparent 0%,
+                rgba(255,255,255,0.3) 50%,
+                transparent 100%
+            );
+            animation: slide-shimmer 1.5s ease-in-out infinite;
+        }
+
+        @keyframes shimmer {
+            0%, 100% { opacity: 0.7; }
+            50% { opacity: 1; }
+        }
+
+        @keyframes slide-shimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+
+        .progress-label {
+            color: white;
+            font-size: 0.85em;
+            font-weight: 600;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+            white-space: nowrap;
+            padding: 0 10px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .progress-text {
+            text-align: center;
+            color: #666;
+            font-size: 0.9em;
+            margin-top: 8px;
+        }
+
+        .progress-text .count {
+            font-weight: 700;
+            color: #667eea;
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <header>
-            <h1>🔲 QR Code Generator & Reader</h1>
+            <h1>QR Code Generator & Reader</h1>
             <p>Fast, Efficient, and Easy to Use</p>
         </header>
 
@@ -341,7 +427,7 @@
             <div class="card">
                 <h2>Generate Single QR Code</h2>
                 <div class="info-box">
-                    ℹ️ Enter a URL to generate a QR code instantly
+                    Enter a URL to generate a QR code instantly
                 </div>
 
                 <form id="generateSingleForm">
@@ -368,8 +454,17 @@
                         </select>
                     </div>
 
-                    <button type="submit">Generate QR Code</button>
+                    <button type="submit" id="singleGenBtn">Generate QR Code</button>
                 </form>
+
+                <div class="progress-wrapper" id="singleGenProgress">
+                    <div class="progress-bar-outer">
+                        <div class="progress-bar-inner indeterminate" id="singleGenBar">
+                            <span class="progress-label">Generating...</span>
+                        </div>
+                    </div>
+                    <div class="progress-text">Processing your QR code...</div>
+                </div>
 
                 <div id="singlePreview"></div>
             </div>
@@ -380,7 +475,7 @@
             <div class="card">
                 <h2>Generate Batch QR Codes</h2>
                 <div class="info-box">
-                    ℹ️ Upload a CSV file with columns: filename, url (max 5000 QR codes)
+                    Upload a CSV file with columns: filename, url (max 5000 QR codes)
                 </div>
 
                 <form id="generateBatchForm">
@@ -388,7 +483,7 @@
                         <label>CSV File (filename, url)</label>
                         <div class="file-input-wrapper">
                             <label class="file-input-label">
-                                📁 Click to upload CSV file or drag and drop
+                                Click to upload CSV file or drag and drop
                                 <input type="file" id="batchCsvFile" accept=".csv" required>
                             </label>
                         </div>
@@ -413,10 +508,19 @@
                     </div>
 
                     <div class="button-group">
-                        <button type="submit">Generate QR Codes</button>
+                        <button type="submit" id="batchGenBtn">Generate QR Codes</button>
                         <a href="/api/download-example-csv" class="tab-button button-secondary" style="text-decoration: none; display: inline-block; padding: 12px 30px;">Download Example CSV</a>
                     </div>
                 </form>
+
+                <div class="progress-wrapper" id="batchGenProgress">
+                    <div class="progress-bar-outer">
+                        <div class="progress-bar-inner" id="batchGenBar">
+                            <span class="progress-label" id="batchGenLabel">0%</span>
+                        </div>
+                    </div>
+                    <div class="progress-text" id="batchGenText">Preparing...</div>
+                </div>
 
                 <div id="batchResult"></div>
             </div>
@@ -427,7 +531,7 @@
             <div class="card">
                 <h2>Read Single QR Code</h2>
                 <div class="info-box">
-                    ℹ️ Upload an image containing a QR code to decode it
+                    Upload an image containing a QR code to decode it
                 </div>
 
                 <form id="readSingleForm">
@@ -435,14 +539,23 @@
                         <label>Image File (PNG, JPG, BMP, GIF, TIFF)</label>
                         <div class="file-input-wrapper">
                             <label class="file-input-label">
-                                📁 Click to upload image or drag and drop
+                                Click to upload image or drag and drop
                                 <input type="file" id="singleImage" accept="image/*" required>
                             </label>
                         </div>
                     </div>
 
-                    <button type="submit">Read QR Code</button>
+                    <button type="submit" id="singleReadBtn">Read QR Code</button>
                 </form>
+
+                <div class="progress-wrapper" id="singleReadProgress">
+                    <div class="progress-bar-outer">
+                        <div class="progress-bar-inner indeterminate" id="singleReadBar">
+                            <span class="progress-label">Reading...</span>
+                        </div>
+                    </div>
+                    <div class="progress-text">Scanning image for QR code...</div>
+                </div>
 
                 <div id="singleReadResult"></div>
             </div>
@@ -453,7 +566,7 @@
             <div class="card">
                 <h2>Read Batch QR Codes</h2>
                 <div class="info-box">
-                    ℹ️ Upload a ZIP file containing multiple QR code images to decode all at once
+                    Upload a ZIP file containing multiple QR code images to decode all at once
                 </div>
 
                 <form id="readBatchForm">
@@ -461,14 +574,23 @@
                         <label>ZIP File (containing images with QR codes)</label>
                         <div class="file-input-wrapper">
                             <label class="file-input-label">
-                                📁 Click to upload ZIP file or drag and drop
+                                Click to upload ZIP file or drag and drop
                                 <input type="file" id="batchZipFile" accept=".zip" required>
                             </label>
                         </div>
                     </div>
 
-                    <button type="submit">Read All QR Codes</button>
+                    <button type="submit" id="batchReadBtn">Read All QR Codes</button>
                 </form>
+
+                <div class="progress-wrapper" id="batchReadProgress">
+                    <div class="progress-bar-outer">
+                        <div class="progress-bar-inner" id="batchReadBar">
+                            <span class="progress-label" id="batchReadLabel">0%</span>
+                        </div>
+                    </div>
+                    <div class="progress-text" id="batchReadText">Preparing...</div>
+                </div>
 
                 <div id="batchReadResult"></div>
             </div>
@@ -477,21 +599,99 @@
 
     <script>
         function switchTab(tabName) {
-            // Hide all tabs
             document.querySelectorAll('.tab-content').forEach(tab => {
                 tab.classList.remove('active');
             });
 
-            // Remove active class from buttons
             document.querySelectorAll('.tab-button').forEach(btn => {
                 btn.classList.remove('active');
             });
 
-            // Show selected tab
             document.getElementById(tabName).classList.add('active');
-
-            // Add active class to clicked button
             event.target.classList.add('active');
+        }
+
+        function showProgress(wrapperId, barId, labelId, textId, percent, text) {
+            const wrapper = document.getElementById(wrapperId);
+            const bar = document.getElementById(barId);
+            wrapper.classList.add('active');
+            bar.classList.remove('indeterminate');
+            bar.style.width = percent + '%';
+            if (labelId) {
+                document.getElementById(labelId).textContent = Math.round(percent) + '%';
+            }
+            if (textId && text) {
+                document.getElementById(textId).innerHTML = text;
+            }
+        }
+
+        function showIndeterminateProgress(wrapperId, barId, text) {
+            const wrapper = document.getElementById(wrapperId);
+            const bar = document.getElementById(barId);
+            wrapper.classList.add('active');
+            bar.classList.add('indeterminate');
+            bar.style.width = '100%';
+        }
+
+        function hideProgress(wrapperId) {
+            document.getElementById(wrapperId).classList.remove('active');
+        }
+
+        function completeProgress(wrapperId, barId, labelId, message, isError) {
+            const bar = document.getElementById(barId);
+            bar.classList.remove('indeterminate');
+            bar.style.width = '100%';
+            bar.style.background = isError
+                ? 'linear-gradient(135deg, #e74c3c, #c0392b)'
+                : 'linear-gradient(135deg, #27ae60, #2ecc71)';
+            if (labelId) {
+                document.getElementById(labelId).textContent = isError ? 'Error' : 'Complete';
+            }
+            setTimeout(() => hideProgress(wrapperId), 2000);
+        }
+
+        function trackJobProgress(jobId, wrapperId, barId, labelId, textId, onComplete, onError) {
+            const source = new EventSource('/api/job/' + jobId + '/progress');
+
+            source.onmessage = function(event) {
+                const data = JSON.parse(event.data);
+
+                if (data.status === 'not_found') {
+                    source.close();
+                    onError('Job not found');
+                    return;
+                }
+
+                if (data.status === 'processing' || data.status === 'queued') {
+                    const current = data.current || 0;
+                    const total = data.total || 1;
+                    const percent = (current / total) * 100;
+                    const text = '<span class="count">' + current + ' / ' + total + '</span> QR codes processed';
+                    showProgress(wrapperId, barId, labelId, textId, percent, text);
+                }
+
+                if (data.status === 'completed') {
+                    source.close();
+                    showProgress(wrapperId, barId, labelId, textId, 100, 'All done! Preparing download...');
+                    setTimeout(function() {
+                        onComplete();
+                    }, 300);
+                }
+
+                if (data.status === 'failed') {
+                    source.close();
+                    completeProgress(wrapperId, barId, labelId, 'Failed', true);
+                    onError(data.error || 'Job failed');
+                }
+            };
+
+            source.onerror = function() {
+                source.close();
+                completeProgress(wrapperId, barId, labelId, 'Connection lost', true);
+                onError('Connection to server lost');
+            };
+
+            return source;
         }
 
         // Generate Single QR Code
@@ -501,17 +701,17 @@
             const size = document.getElementById('singleSize').value;
             const format = document.getElementById('singleFormat').value;
 
-            const btn = e.target.querySelector('button');
+            const btn = document.getElementById('singleGenBtn');
             const originalText = btn.textContent;
             btn.disabled = true;
             btn.innerHTML = '<span class="loading"></span> Generating...';
 
+            showIndeterminateProgress('singleGenProgress', 'singleGenBar');
+
             try {
                 const response = await fetch('/api/generate-qr', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ url, size, format })
                 });
 
@@ -519,21 +719,24 @@
                     const blob = await response.blob();
                     const reader = new FileReader();
                     reader.onload = (event) => {
+                        completeProgress('singleGenProgress', 'singleGenBar', null, 'Done', false);
                         document.getElementById('singlePreview').innerHTML = `
                             <div class="preview">
-                                <p>✅ QR Code Generated Successfully!</p>
+                                <p>QR Code Generated Successfully!</p>
                                 <img src="${event.target.result}" alt="QR Code">
-                                <a href="${event.target.result}" download="qrcode.${format}" class="tab-button" style="display: inline-block; margin-top: 15px;">📥 Download</a>
+                                <a href="${event.target.result}" download="qrcode.${format}" class="tab-button" style="display: inline-block; margin-top: 15px;">Download</a>
                             </div>
                         `;
                     };
                     reader.readAsDataURL(blob);
                 } else {
                     const error = await response.json();
-                    document.getElementById('singlePreview').innerHTML = `<div class="error">❌ ${error.error}</div>`;
+                    completeProgress('singleGenProgress', 'singleGenBar', null, 'Error', true);
+                    document.getElementById('singlePreview').innerHTML = `<div class="error">${error.error}</div>`;
                 }
             } catch (error) {
-                document.getElementById('singlePreview').innerHTML = `<div class="error">❌ Error: ${error.message}</div>`;
+                completeProgress('singleGenProgress', 'singleGenBar', null, 'Error', true);
+                document.getElementById('singlePreview').innerHTML = `<div class="error">Error: ${error.message}</div>`;
             } finally {
                 btn.disabled = false;
                 btn.textContent = originalText;
@@ -547,10 +750,13 @@
             const size = document.getElementById('batchSize').value;
             const format = document.getElementById('batchFormat').value;
 
-            const btn = e.target.querySelector('button');
+            const btn = document.getElementById('batchGenBtn');
             const originalText = btn.textContent;
             btn.disabled = true;
-            btn.innerHTML = '<span class="loading"></span> Generating...';
+            btn.innerHTML = '<span class="loading"></span> Starting...';
+            document.getElementById('batchResult').innerHTML = '';
+
+            showProgress('batchGenProgress', 'batchGenBar', 'batchGenLabel', 'batchGenText', 2, 'Uploading CSV...');
 
             try {
                 const formData = new FormData();
@@ -563,23 +769,43 @@
                     body: formData
                 });
 
-                if (response.ok) {
-                    const blob = await response.blob();
-                    const url = window.URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.download = `qr_codes_${Date.now()}.zip`;
-                    a.click();
-                    window.URL.revokeObjectURL(url);
-
-                    document.getElementById('batchResult').innerHTML = `<div class="success">✅ QR codes generated successfully! Download started.</div>`;
-                } else {
+                if (!response.ok) {
                     const error = await response.json();
-                    document.getElementById('batchResult').innerHTML = `<div class="error">❌ ${error.error}</div>`;
+                    completeProgress('batchGenProgress', 'batchGenBar', 'batchGenLabel', 'Error', true);
+                    document.getElementById('batchResult').innerHTML = `<div class="error">${error.error}</div>`;
+                    btn.disabled = false;
+                    btn.textContent = originalText;
+                    return;
                 }
+
+                const data = await response.json();
+                const jobId = data.job_id;
+
+                btn.innerHTML = '<span class="loading"></span> Generating...';
+
+                trackJobProgress(
+                    jobId,
+                    'batchGenProgress',
+                    'batchGenBar',
+                    'batchGenLabel',
+                    'batchGenText',
+                    function onComplete() {
+                        window.location.href = '/api/job/' + jobId + '/download';
+                        document.getElementById('batchResult').innerHTML = `<div class="success">QR codes generated successfully! Download starting...</div>`;
+                        completeProgress('batchGenProgress', 'batchGenBar', 'batchGenLabel', 'Done', false);
+                        btn.disabled = false;
+                        btn.textContent = originalText;
+                    },
+                    function onError(msg) {
+                        document.getElementById('batchResult').innerHTML = `<div class="error">${msg}</div>`;
+                        btn.disabled = false;
+                        btn.textContent = originalText;
+                    }
+                );
+
             } catch (error) {
-                document.getElementById('batchResult').innerHTML = `<div class="error">❌ Error: ${error.message}</div>`;
-            } finally {
+                completeProgress('batchGenProgress', 'batchGenBar', 'batchGenLabel', 'Error', true);
+                document.getElementById('batchResult').innerHTML = `<div class="error">Error: ${error.message}</div>`;
                 btn.disabled = false;
                 btn.textContent = originalText;
             }
@@ -590,10 +816,12 @@
             e.preventDefault();
             const file = document.getElementById('singleImage').files[0];
 
-            const btn = e.target.querySelector('button');
+            const btn = document.getElementById('singleReadBtn');
             const originalText = btn.textContent;
             btn.disabled = true;
             btn.innerHTML = '<span class="loading"></span> Reading...';
+
+            showIndeterminateProgress('singleReadProgress', 'singleReadBar');
 
             try {
                 const formData = new FormData();
@@ -606,8 +834,9 @@
 
                 if (response.ok) {
                     const data = await response.json();
+                    completeProgress('singleReadProgress', 'singleReadBar', null, 'Done', false);
                     document.getElementById('singleReadResult').innerHTML = `
-                        <div class="success">✅ QR Code Read Successfully!</div>
+                        <div class="success">QR Code Read Successfully!</div>
                         <div class="result">
                             <strong>Decoded Content:</strong><br>
                             ${data.data}
@@ -615,10 +844,12 @@
                     `;
                 } else {
                     const error = await response.json();
-                    document.getElementById('singleReadResult').innerHTML = `<div class="error">❌ ${error.error}</div>`;
+                    completeProgress('singleReadProgress', 'singleReadBar', null, 'Error', true);
+                    document.getElementById('singleReadResult').innerHTML = `<div class="error">${error.error}</div>`;
                 }
             } catch (error) {
-                document.getElementById('singleReadResult').innerHTML = `<div class="error">❌ Error: ${error.message}</div>`;
+                completeProgress('singleReadProgress', 'singleReadBar', null, 'Error', true);
+                document.getElementById('singleReadResult').innerHTML = `<div class="error">Error: ${error.message}</div>`;
             } finally {
                 btn.disabled = false;
                 btn.textContent = originalText;
@@ -630,10 +861,13 @@
             e.preventDefault();
             const file = document.getElementById('batchZipFile').files[0];
 
-            const btn = e.target.querySelector('button');
+            const btn = document.getElementById('batchReadBtn');
             const originalText = btn.textContent;
             btn.disabled = true;
-            btn.innerHTML = '<span class="loading"></span> Reading...';
+            btn.innerHTML = '<span class="loading"></span> Starting...';
+            document.getElementById('batchReadResult').innerHTML = '';
+
+            showProgress('batchReadProgress', 'batchReadBar', 'batchReadLabel', 'batchReadText', 2, 'Uploading ZIP...');
 
             try {
                 const formData = new FormData();
@@ -644,23 +878,43 @@
                     body: formData
                 });
 
-                if (response.ok) {
-                    const blob = await response.blob();
-                    const url = window.URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.download = `qr_results_${Date.now()}.csv`;
-                    a.click();
-                    window.URL.revokeObjectURL(url);
-
-                    document.getElementById('batchReadResult').innerHTML = `<div class="success">✅ QR codes read successfully! CSV file downloaded.</div>`;
-                } else {
+                if (!response.ok) {
                     const error = await response.json();
-                    document.getElementById('batchReadResult').innerHTML = `<div class="error">❌ ${error.error}</div>`;
+                    completeProgress('batchReadProgress', 'batchReadBar', 'batchReadLabel', 'Error', true);
+                    document.getElementById('batchReadResult').innerHTML = `<div class="error">${error.error}</div>`;
+                    btn.disabled = false;
+                    btn.textContent = originalText;
+                    return;
                 }
+
+                const data = await response.json();
+                const jobId = data.job_id;
+
+                btn.innerHTML = '<span class="loading"></span> Reading...';
+
+                trackJobProgress(
+                    jobId,
+                    'batchReadProgress',
+                    'batchReadBar',
+                    'batchReadLabel',
+                    'batchReadText',
+                    function onComplete() {
+                        window.location.href = '/api/job/' + jobId + '/download';
+                        document.getElementById('batchReadResult').innerHTML = `<div class="success">QR codes read successfully! CSV download starting...</div>`;
+                        completeProgress('batchReadProgress', 'batchReadBar', 'batchReadLabel', 'Done', false);
+                        btn.disabled = false;
+                        btn.textContent = originalText;
+                    },
+                    function onError(msg) {
+                        document.getElementById('batchReadResult').innerHTML = `<div class="error">${msg}</div>`;
+                        btn.disabled = false;
+                        btn.textContent = originalText;
+                    }
+                );
+
             } catch (error) {
-                document.getElementById('batchReadResult').innerHTML = `<div class="error">❌ Error: ${error.message}</div>`;
-            } finally {
+                completeProgress('batchReadProgress', 'batchReadBar', 'batchReadLabel', 'Error', true);
+                document.getElementById('batchReadResult').innerHTML = `<div class="error">Error: ${error.message}</div>`;
                 btn.disabled = false;
                 btn.textContent = originalText;
             }
